@@ -1,0 +1,21 @@
+Metadata-Version: 1.1
+Name: uvc.concierge
+Version: 0.1
+Summary: Proxied WSGI Applications HUB
+Home-page: http://gitweb.dolmen-project.org/
+Author: The Dolmen team
+Author-email: dolmen@list.dolmen-project.org
+License: ZPL
+Description: 
+        
+        Changelog
+        =========
+        
+        0.1 (unreleased)
+        ----------------
+        
+          - ...
+        
+Keywords: UVC
+Platform: UNKNOWN
+Classifier: Programming Language :: Python

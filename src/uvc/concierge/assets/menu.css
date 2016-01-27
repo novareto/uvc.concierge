@@ -1,0 +1,13 @@
+#remotewsgi {
+    position: fixed;
+    top: 0px;
+    background-color: black;
+    z-index: 1100;
+    padding: 10px;
+    margin: 0;
+    list-style: none;
+}
+
+#remotewsgi a {
+    color: white;
+}

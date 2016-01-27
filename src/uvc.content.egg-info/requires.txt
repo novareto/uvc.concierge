@@ -1,0 +1,6 @@
+martian
+setuptools
+zope.interface
+zope.schema
+
+[test]

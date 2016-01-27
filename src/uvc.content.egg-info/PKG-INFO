@@ -1,0 +1,27 @@
+Metadata-Version: 1.1
+Name: uvc.content
+Version: 0.1
+Summary: Uvc Web Framework content components definitions.
+Home-page: http://gitweb.dolmen-project.org/
+Author: The Dolmen team
+Author-email: dolmen@list.dolmen-project.org
+License: ZPL
+Description: ===========
+        uvc.content
+        ===========
+        
+        The package `uvc.content` is a convenient way to define content types.
+        It provides a schema directive and a base interface.
+        
+        
+        Changelog
+        =========
+        
+        0.1 (2011-06-14)
+        ----------------
+        
+        - Initial release
+        
+Keywords: UVC
+Platform: UNKNOWN
+Classifier: Programming Language :: Python
