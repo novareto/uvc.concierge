@@ -8,20 +8,25 @@ from .forms import LoginForm
 from repoze.who.interfaces import IAuthenticator, IMetadataProvider
 from zope.interface import implementer
 from multiprocessing.pool import ThreadPool
+from multiprocessing import TimeoutError
 
 
 pool = ThreadPool(processes=4)
 
 
 def check_auth(querier, url, username, password):
-    return querier(url).check_authentication(
-        username, password)
+    try:
+        return querier(url).check_authentication(
+            username, password)
+    except Exception:
+        return False
 
 
 METHODS = {
     'json': JSONPortal,
     'xmlrpc': XMLRPCPortal,
     }
+
 
 @implementer(IAuthenticator)
 class PortalsLoginPlugin(object):
@@ -40,9 +45,15 @@ class PortalsLoginPlugin(object):
                         check_auth, (querier, url, username, password))
 
         for name, task in queriers.items():
-            success = task.get()  
-            if success is True:
-                successes.add(script_name)
+            try:
+                success = task.get(timeout=3)
+                if success is True:
+                    print "Successfuly authenticated on %r" % name
+                    successes.add(script_name)
+                else:
+                    print "Login failed on %r" % name
+            except TimeoutError:
+                print "Timeout while trying to login on %r" % name
         return successes
 
     def authenticate(self, environ, identity):

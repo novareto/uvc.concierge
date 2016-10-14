@@ -51,7 +51,7 @@ def wrapper(app):
             environ['HTTP_AUTHORIZATION'] = httpauth
             
         if app.use_x_headers is True:
-            environ['HTTP_X_VHM_HOST'] = app.href
+            environ['HTTP_X_VHM_HOST'] = app.host
             environ['HTTP_X_VHM_ROOT'] = app.target
 
         return app(environ, wrap_start_response(start_response))
@@ -126,6 +126,7 @@ def make_proxy(*global_conf, **local_conf):
         pickle_keys=pickle_keys,
     )
     application.href = href
+    application.host = local_conf.get('host', 'href')
     application.target = local_conf.get('target', '/')
     application.use_x_headers = local_conf.get(
         'use_x_headers', 'False').lower() == 'true'
