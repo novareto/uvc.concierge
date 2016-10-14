@@ -49,7 +49,7 @@ class PortalsLoginPlugin(object):
                 success = task.get(timeout=3)
                 if success is True:
                     print "Successfuly authenticated on %r" % name
-                    successes.add(script_name)
+                    successes.add(name)
                 else:
                     print "Login failed on %r" % name
             except TimeoutError:
