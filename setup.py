@@ -14,6 +14,7 @@ readme = text(os.path.join('src', 'uvc', 'concierge', 'README.txt'))
 history = text(os.path.join('docs', 'HISTORY.txt'))
 
 install_requires = [
+    'setuptools',
     'PyCrypto',
     'barrel',
     'fanstatic',
