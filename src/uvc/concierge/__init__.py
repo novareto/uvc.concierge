@@ -94,13 +94,20 @@ class RemoteHub(URLMap):
         identity = environ.get('repoze.who.identity')
         if identity is not None:
             tokens = set(identity.get('tokens', []))
+            print tokens
             for (domain, app_url), app in self.applications:
+                print app_url
                 if app_url in tokens:
                     link_url = app.link_url
                     if link_url is None:
                         link_url = 'http://%s%s' % (
                             environ['HTTP_HOST'], app_url)
                     yield (link_url, app.title)
+            link_url = 'http://%s/logout' % environ['HTTP_HOST']
+            yield (link_url, u"Logout")
+        else:
+            link_url = 'http://%s/login' % environ['HTTP_HOST']
+            yield (link_url, u"Login")
 
     def __init__(self, *args, **kwargs):
         URLMap.__init__(self, *args, **kwargs)
@@ -138,5 +145,4 @@ def make_proxy(*global_conf, **local_conf):
     app.login_url = local_conf.get('login_url') or href
     app.title = local_conf.get('title') or 'No title'
     app.link_url = local_conf.get('link_url', None)
-
     return app
