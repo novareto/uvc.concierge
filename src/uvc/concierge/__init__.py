@@ -24,10 +24,16 @@ FILTER_HEADERS = [
 
 def wrap_start_response(start_response):
     def wrapped_start_response(status, headers_out):
+        keep = []
         # Remove "hop-by-hop" headers
-        headers_out = [(k,v) for (k,v) in headers_out
-                       if k not in FILTER_HEADERS]
-        return start_response(status, headers_out)
+        for header, value in headers_out:
+            if header not in FILTER_HEADERS:
+                keep.append((header, value))
+            if header == 'Content-Type' and 'text/html' in value:
+                if status == "200 OK":
+                    js.need()
+                    css.need()
+        return start_response(status, keep)
     return wrapped_start_response
 
 
@@ -41,8 +47,6 @@ def lister(value):
 
 def wrapper(app):
     def caller(environ, start_response):
-        js.need()
-        css.need()
         if 'repoze.who.identity' in environ:
             aes = environ['aes_cipher']
             val = environ['repoze.who.identity']['repoze.who.userid']
@@ -54,7 +58,8 @@ def wrapper(app):
             environ['HTTP_X_VHM_HOST'] = app.host
             environ['HTTP_X_VHM_ROOT'] = app.target
 
-        return app(environ, wrap_start_response(start_response))
+        result = app(environ, wrap_start_response(start_response))
+        return result
     return caller
 
 
@@ -94,9 +99,7 @@ class RemoteHub(URLMap):
         identity = environ.get('repoze.who.identity')
         if identity is not None:
             tokens = set(identity.get('tokens', []))
-            print tokens
             for (domain, app_url), app in self.applications:
-                print app_url
                 if app_url in tokens:
                     link_url = app.link_url
                     if link_url is None:
