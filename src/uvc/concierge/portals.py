@@ -63,6 +63,7 @@ class XMLRPCPortal(object):
 
     @timeout(False)
     def check_authentication(self, user, password):
+        print self.server.checkAuth(user, password)
         return self.server.checkAuth(user, password) is 1
 
 
@@ -82,6 +83,7 @@ class JSONPortal(object):
         )
         try:
             resp = requests.get(url=self.url, params=params)
+            print resp.text
             if resp.status_code == 200:
                 auth = json.loads(resp.text)
                 return auth['auth'] is 1

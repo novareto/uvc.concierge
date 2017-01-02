@@ -2,6 +2,7 @@
 
 import json
 import base64
+import gevent
 from wsgiproxy.app import WSGIProxyApp
 from paste.urlmap import URLMap, parse_path_expression
 from repoze.who.api import get_api
@@ -25,7 +26,7 @@ FILTER_HEADERS = [
 def wrap_start_response(start_response):
     def wrapped_start_response(status, headers_out):
         keep = []
-        # Remove "hop-by-hop" headers
+        # Remove "hop-by-hop" headers        
         for header, value in headers_out:
             if header not in FILTER_HEADERS:
                 keep.append((header, value))
@@ -47,6 +48,7 @@ def lister(value):
 
 def wrapper(app):
     def caller(environ, start_response):
+        
         if 'repoze.who.identity' in environ:
             aes = environ['aes_cipher']
             val = environ['repoze.who.identity']['repoze.who.userid']
@@ -57,7 +59,7 @@ def wrapper(app):
         if app.use_x_headers is True:
             environ['HTTP_X_VHM_HOST'] = app.host
             environ['HTTP_X_VHM_ROOT'] = app.target
-
+            
         result = app(environ, wrap_start_response(start_response))
         return result
     return caller
@@ -83,7 +85,7 @@ class HubDetails(object):
     def __init__(self, hub):
         self.hub = hub
 
-    def __call__(self, environ, start_response):
+    def __call__(self, environ, start_response):        
         result = dict(self.hub.about(environ))
         response_body = json.dumps(result)
         status = '200 OK'
@@ -95,7 +97,7 @@ class HubDetails(object):
 
 class RemoteHub(URLMap):
 
-    def about(self, environ):
+    def about(self, environ):        
         identity = environ.get('repoze.who.identity')
         if identity is not None:
             tokens = set(identity.get('tokens', []))
@@ -126,7 +128,7 @@ def make_proxy(*global_conf, **local_conf):
     unicode_keys = lister(local_conf.get('unicode_keys'))
     json_keys = lister(local_conf.get('json_keys'))
     pickle_keys = lister(local_conf.get('pickle_keys'))
-    
+
     application = WSGIProxyApp(
         href,
         secret_file=secret_file,

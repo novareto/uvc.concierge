@@ -18,6 +18,7 @@ install_requires = [
     'PyCrypto',
     'barrel',
     'fanstatic',
+    'gevent',
     'js.jquery',
     'wsgiproxy',
     'zope.interface',

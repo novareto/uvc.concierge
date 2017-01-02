@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import gevent
+from gevent import Greenlet
 from webob import Response, Request
 from webob.exc import HTTPFound
 from repoze.who.api import get_api
@@ -28,6 +30,14 @@ METHODS = {
     }
 
 
+def initiate_session(environ, username, domains):
+      session = environ['beaker.session']
+      if not 'novareto' in session:
+          session['novareto'] = "TRUE"
+          session.save()
+          session.persist()
+
+
 @implementer(IAuthenticator)
 class PortalsLoginPlugin(object):
 
@@ -54,6 +64,7 @@ class PortalsLoginPlugin(object):
                     print "Login failed on %r" % name
             except TimeoutError:
                 print "Timeout while trying to login on %r" % name
+        print successes
         return successes
 
     def authenticate(self, environ, identity):
@@ -68,6 +79,9 @@ class PortalsLoginPlugin(object):
 
         successes = self.try_login(hub, username, password)
         if successes:
+            thread = Greenlet.spawn(
+                initiate_session, environ, username, successes)
+            gevent.joinall([thread])
             environ['remote.domains'] = successes
             return username
         return None
@@ -76,8 +90,10 @@ class PortalsLoginPlugin(object):
 def logout_app(environ, start_response):
     who_api = get_api(environ)
     headers = who_api.logout()
+    session = environ['beaker.session']
+    session.invalidate()
     return HTTPFound(location='/login', headers=headers)(
-                    environ, start_response)
+        environ, start_response)
 
 
 def login_center(hub):
