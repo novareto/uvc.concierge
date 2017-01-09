@@ -31,7 +31,7 @@ def wrap_start_response(start_response):
             if header not in FILTER_HEADERS:
                 keep.append((header, value))
             if header == 'Content-Type' and 'text/html' in value:
-                if status == "200 OK":
+                if status.upper() == "200 OK":
                     js.need()
                     css.need()
         return start_response(status, keep)

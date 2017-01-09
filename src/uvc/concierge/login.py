@@ -31,11 +31,12 @@ METHODS = {
 
 
 def initiate_session(environ, username, domains):
-      session = environ['beaker.session']
-      if not 'novareto' in session:
-          session['novareto'] = "TRUE"
-          session.save()
-          session.persist()
+    print "I SET THE SESSION"
+    session = environ['beaker.session']
+    if not 'address' in session:
+        session['address'] = dict(name1="Novareto", name2="GMBH", strasse="Karonlinenstr. 17", plz="90619", ort=u"Fürth")
+        session.save()
+        session.persist()
 
 
 @implementer(IAuthenticator)
