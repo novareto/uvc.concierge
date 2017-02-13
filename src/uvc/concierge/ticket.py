@@ -5,7 +5,7 @@ import base64
 import hmac
 import os
 
-from urllib import unquote
+from urllib.parse import unquote
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.PublicKey import RSA
@@ -63,11 +63,11 @@ class AESCipher(object):
     @staticmethod
     def pkcs1_pad(data):
         length = AES.block_size - (len(data) % AES.block_size)
-        return data + ('\0' * length)
+        return data + (b'\0' * length)
 
     @staticmethod
     def pkcs1_unpad(data):
-        return data.rstrip('\0')
+        return data.rstrip(b'\0')
 
     @staticmethod
     def pkcs7_pad(data):
@@ -208,6 +208,8 @@ def cipher(app, global_conf, cipher_key=None):
 
 
 def bauth(aes, val):
+    if isinstance(val, str):
+        val = bytes(val, 'utf-8')
     return aes.encrypt(val)
 
 

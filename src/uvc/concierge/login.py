@@ -31,7 +31,7 @@ METHODS = {
 
 
 def initiate_session(environ, username, domains):
-    print "I SET THE SESSION"
+    print( "I SET THE SESSION" )
     session = environ['beaker.session']
     if not 'address' in session:
         session['address'] = dict(name1="Novareto", name2="GMBH", strasse="Karonlinenstr. 17", plz="90619", ort=u"Fürth")
@@ -59,13 +59,13 @@ class PortalsLoginPlugin(object):
             try:
                 success = task.get(timeout=3)
                 if success is True:
-                    print "Successfuly authenticated on %r" % name
+                    #print "Successfuly authenticated on %r" % name
                     successes.add(name)
                 else:
-                    print "Login failed on %r" % name
+                    pass
+                    #print "Login failed on %r" % name
             except TimeoutError:
-                print "Timeout while trying to login on %r" % name
-        print successes
+                print( "Timeout while trying to login on %r" % name)
         return successes
 
     def authenticate(self, environ, identity):

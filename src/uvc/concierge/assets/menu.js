@@ -1,5 +1,5 @@
 $(document).ready(function() {
-    $.getJSON("http://localhost:8080/__about__", function(data) {
+    $.getJSON("http://karl.novareto.de:8080/__about__", function(data) {
 	var items = [];
 	$.each(data, function(key, val) {
 	    items.push( "<li><a href='" + key + "'> 🔓 " + val + "</a></li>");

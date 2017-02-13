@@ -3,7 +3,7 @@
 import json
 import base64
 import gevent
-from wsgiproxy.app import WSGIProxyApp
+#from wsgiproxy.app import WSGIProxyApp
 from paste.urlmap import URLMap, parse_path_expression
 from repoze.who.api import get_api
 from .resources import js, css
@@ -53,7 +53,7 @@ def wrapper(app):
             aes = environ['aes_cipher']
             val = environ['repoze.who.identity']['repoze.who.userid']
             userpwd = read_bauth(aes, val)
-            httpauth = 'Basic ' + base64.encodestring(userpwd).strip()
+            httpauth = b'Basic ' + base64.encodestring(userpwd).strip()
             environ['HTTP_AUTHORIZATION'] = httpauth
             
         if app.use_x_headers is True:
@@ -92,7 +92,7 @@ class HubDetails(object):
         response_headers = [('Content-Type', 'application/json'),
                             ('Content-Length', str(len(response_body)))]
         start_response(status, response_headers)
-        return [response_body]
+        return [bytes(response_body, 'utf8')]
 
 
 class RemoteHub(URLMap):
@@ -108,10 +108,10 @@ class RemoteHub(URLMap):
                         link_url = 'http://%s%s' % (
                             environ['HTTP_HOST'], app_url)
                     yield (link_url, app.title)
-            link_url = 'http://%s/logout' % environ['HTTP_HOST']
+            link_url = u'http://%s/logout' % environ['HTTP_HOST']
             yield (link_url, u"Logout")
         else:
-            link_url = 'http://%s/login' % environ['HTTP_HOST']
+            link_url = u'http://%s/login' % environ['HTTP_HOST']
             yield (link_url, u"Login")
 
     def __init__(self, *args, **kwargs):
@@ -128,15 +128,17 @@ def make_proxy(*global_conf, **local_conf):
     unicode_keys = lister(local_conf.get('unicode_keys'))
     json_keys = lister(local_conf.get('json_keys'))
     pickle_keys = lister(local_conf.get('pickle_keys'))
-
-    application = WSGIProxyApp(
-        href,
-        secret_file=secret_file,
-        string_keys=string_keys,
-        unicode_keys=unicode_keys,
-        json_keys=json_keys,
-        pickle_keys=pickle_keys,
-    )
+#    import pdb; pdb.set_trace()
+#    application = WSGIProxyApp(
+#        href,
+#        secret_file=secret_file,
+#        string_keys=string_keys,
+#        unicode_keys=unicode_keys,
+#        json_keys=json_keys,
+#        pickle_keys=pickle_keys,
+#    )
+    from wsgiproxy import HostProxy
+    application = HostProxy(href, client='urllib3')
     application.href = href
     application.host = local_conf.get('host', 'href')
     application.target = local_conf.get('target', '/')

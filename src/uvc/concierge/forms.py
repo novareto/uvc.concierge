@@ -6,6 +6,10 @@ from webob import Response, Request
 from webob.exc import HTTPFound
 from repoze.who.api import get_api
 
+#class TALTemplate(object):
+#    def __init__(self, *args, **kwargs):
+#       pass
+
 
 template_dir = path.dirname(__file__)
 login_template = path.join(template_dir, 'login.pt')
