@@ -1,0 +1,106 @@
+import React, { Component } from 'react';
+import './App.css';
+import cookie from 'react-cookie';
+import { Navbar, Nav, NavItem, FormGroup, Button, FormControl } from 'react-bootstrap';
+
+
+class LoginComponent extends React.Component {
+
+  constructor(props) {
+    super(props);
+    this.state = { login: '', password: '', isLoggedIn: false };
+    //var s = new WebSocket("ws://karl.novareto.de:8080/socket");
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleChange(event) {
+    var input_name = event.target.name;
+    var obj = {};
+    obj[input_name] = event.target.value
+    console.log(obj);
+    this.setState(obj);
+  }
+
+  handleSubmit(event) {
+    this.setState({isLoggedIn: true});
+    const userId = this.state.login + ':' + this.state.password
+    cookie.save('userId', userId, { path: '/' });
+    event.preventDefault();
+  }
+
+  render() {
+    console.log('RENDER');
+    const isLoggedIn = this.state.isLoggedIn;
+    let elem = null;
+    if (!isLoggedIn) {
+      elem = <form onSubmit={this.handleSubmit}>
+        <Navbar.Form pullRight >
+          <FormGroup>
+            <FormControl type="text" placeholder="Username" name="login" onChange={this.handleChange} />
+            {' '}
+            <FormControl type="text" placeholder="Pasword" name="password" onChange={this.handleChange} />
+            {' '}
+          </FormGroup>
+          {' '}
+          <Button type="submit">Submit</Button>
+        </Navbar.Form>
+      </form>
+    }
+    else {
+      elem = <Navbar.Text pullRight> Logged in as USERS </Navbar.Text>
+    }
+    return (elem)
+  }
+}
+  
+class BasicMenus extends Component {
+  
+  constructor(props) {
+    console.log('CONSTRUCTOR');
+    super(props)
+    this.state = {
+      menus: [
+        {title:'Home', href:'http://www.novareto.de'},
+        {title:'Novareto', href:'http://www.novareto.de'}
+        ]
+    }
+  }
+  
+  render() {
+    console.log('RENDER');
+    return (
+    <Navbar.Collapse>
+      <Nav>
+        {
+          this.state.menus.map(function(menu) {
+            return <NavItem eventKey={1} href={menu.href}>{menu.title}</NavItem>
+          })
+        }
+      </Nav>
+       <LoginComponent> </LoginComponent>
+    </Navbar.Collapse>
+    )
+  }
+}
+
+
+class App extends Component {
+  render() {
+    return (
+      <div className="App">
+        <Navbar inverse collapseOnSelect>
+          <Navbar.Header>
+            <Navbar.Brand>
+              <a href=""> UVC.Concierge </a>
+            </Navbar.Brand>
+             <Navbar.Toggle />
+          </Navbar.Header>
+          <BasicMenus> </BasicMenus>
+        </Navbar>
+      </div>
+    )
+  }
+}
+
+export default App;
