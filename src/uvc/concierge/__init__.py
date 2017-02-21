@@ -9,6 +9,8 @@ from repoze.who.api import get_api
 from .resources import js, css
 from .login import logout_app, login_center
 from .ticket import read_bauth
+from .websockets.websocket import WebSocketWSGI
+from .websockets.app import handle
 
 
 FILTER_HEADERS = [
@@ -119,6 +121,7 @@ class RemoteHub(URLMap):
         self['/__about__'] = HubDetails(self)
         self['/login'] = login_center(self)
         self['/logout'] = logout_app
+        self['/socket'] = WebSocketWSGI(self, handle)
 
 
 def make_proxy(*global_conf, **local_conf):
@@ -152,4 +155,19 @@ def make_proxy(*global_conf, **local_conf):
     app.login_url = local_conf.get('login_url') or href
     app.title = local_conf.get('title') or 'No title'
     app.link_url = local_conf.get('link_url', None)
+    return app
+
+
+def make_listener(*global_conf, **local_conf):
+
+    import os
+    def app(environ, start_response):
+        data = open(os.path.join(
+                     os.path.dirname(__file__),
+                     'websocket.html')).read()
+        data = data % environ
+        start_response('200 OK', [('Content-Type', 'text/html'),
+                                  ('Content-Length',  str(len(data)))])
+        return [data.encode('utf-8')]
+
     return app
