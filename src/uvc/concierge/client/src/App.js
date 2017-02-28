@@ -1,6 +1,12 @@
 import React, { Component } from 'react';
 import './App.css';
 import { Navbar, Nav, NavItem, FormGroup, Button, FormControl, NavDropdown, MenuItem } from 'react-bootstrap';
+import { AlertList } from "react-bs-notifier";
+
+
+function delete_cookie(name, domain) {
+  document.cookie = name +'=; Path=/; Domain='+ domain +'; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+}
 
 
 function waitForSocketConnection(socket, callback){
@@ -30,6 +36,7 @@ class LoginComponent extends React.Component {
     this.socket = props.conn;
     var ws = this.socket;
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.logout = this.logout.bind(this);
     waitForSocketConnection(ws, function() {
        ws.send(JSON.stringify(['isloggedin', '']));
     })  
@@ -42,6 +49,11 @@ class LoginComponent extends React.Component {
     var data = {login:event.target.login.value, password:event.target.password.value};
     this.socket.send(JSON.stringify(["login", data]));
     event.preventDefault();
+  }
+
+  logout(event) {
+     console.log('LOGOUT');
+    this.socket.send(JSON.stringify(["logout", '']));
   }
 
   render() {
@@ -65,32 +77,69 @@ class LoginComponent extends React.Component {
       elem = 
       <Nav pullRight>
         <NavDropdown pullRight title="ck@novareto.de" id="basic-nav-dropdown">
-           <MenuItem eventKey={3.1}>Logout</MenuItem>
+           <MenuItem onClick={this.logout} eventKey={3.1}>Logout</MenuItem>
         </NavDropdown>
         </Nav>
     }
     return (elem)
   }
 }
-  
+
+
 class BasicMenus extends Component {
+
+    onAlertDismissed(alert) {
+        const alerts = this.state.alerts;
+
+	// find the index of the alert that was dismissed                                                                                                                       
+        const idx = alerts.indexOf(alert);
+
+        if (idx >= 0) {
+            this.setState({
+                // remove the alert from the array                                                                                                                              
+                alerts: [...alerts.slice(0, idx), ...alerts.slice(idx + 1)]
+            });
+	}
+  }
+
+  generate(type, message) {
+    const newAlert = {
+       id: (new Date()).getTime(),
+       type: type,
+       headline: `Whoa, ${type}!`,
+       message: message
+    };
+    console.log(this);
+    this.setState({
+      alerts: [...this.state.alerts, newAlert]
+    });
+  }
+
   
   constructor(props) {
     super(props)
+
+    this.state = {
+        position: "top-right",
+        alerts: [],
+        timeout: 3000,
+    };
+
     this.conn = props.conn
     this.handle_redirect = this.handle_redirect.bind(this);
     this.conn.onmessage = (e) => {
-      console.log(e);
       var response = JSON.parse(e.data);
       if (response.length !== 2) {
-        alert('Malformed response');
+        alert(response);
       }
       else {
         if (response[0] === 'login_success' || response[0] === 'already_logged_in') {
           if (response[0] === 'login_success') {
-            response[1].data.forEach(function (entry) {
+            this.generate('success', 'You logged in successfully.');
+            response[1].data.forEach((entry) => {
               if (entry[0] === 'Set-Cookie') {
-                document.cookie = entry[1];
+                  console.log(entry[1]);
+                  document.cookie = entry[1];
               }
             });
           }
@@ -103,8 +152,14 @@ class BasicMenus extends Component {
             this.setState({loggedIn: true})
           }
           );
-        };
-        
+        } else if (response[0] === 'logged_out') {
+	    response[1].domains.forEach((entry) => {
+		delete_cookie(entry[0], entry[1]);
+	    })
+	    this.setState({menus: []});
+            this.setState({loggedIn: false});
+	    this.generate('success', 'You are now logged out.');
+	}
       }
     }
   
@@ -119,6 +174,14 @@ class BasicMenus extends Component {
   
   render() {
     return (
+<div>
+        <AlertList
+            position={this.state.position}
+            alerts={this.state.alerts}
+            timeout={this.state.timeout}
+            dismissTitle="Begone!"
+            onDismiss={this.onAlertDismissed.bind(this)}
+            />
     <Navbar.Collapse>
       <Nav>
         {
@@ -129,6 +192,7 @@ class BasicMenus extends Component {
       </Nav>
        <LoginComponent conn={this.conn} loggedIn={this.state.loggedIn}> </LoginComponent>
     </Navbar.Collapse>
+</div>
     )
   }
 }

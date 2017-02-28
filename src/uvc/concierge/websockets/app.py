@@ -2,6 +2,7 @@
 
 from urllib import parse
 import json
+from webob import Response
 from repoze.who.api import get_api
 
 
@@ -58,14 +59,33 @@ def Login(ws, formdata):
 def isLoggedIn(ws, formdata):
     identity = ws.environ.get('repoze.who.identity')
     if identity:
-        print("YES I AM LOGGGEED")
         return ["already_logged_in", {
             'menu': list(about(ws.environ))}]
     return ["not_logged_in"]
 
+
+from http.cookies import  SimpleCookie
+def Logout(ws, formdata):
+    if 'repoze.who.identity' in ws.environ:
+        del ws.environ['repoze.who.identity']
+
+    who_api = get_api(ws.environ)
+    headers = who_api.logout()
+
+    response = Response(ws.environ)
+    
+    for header, value in headers:
+        response.headers[header] = value
+
+    domain = ws.environ['HTTP_HOST'].split(':', 1)[0]
+    return ["logged_out", {'domains': [
+        ('oatmeal', domain), ('oatmeal', '.' + domain)]}]
+
+
 DISPATCHER = {
     'login': Login,
-    'isloggedin': isLoggedIn
+    'isloggedin': isLoggedIn,
+    'logout': Logout,
     }
 
 

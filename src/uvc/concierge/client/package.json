@@ -9,6 +9,7 @@
     "bootstrap": "^3.3.7",
     "react": "^15.4.2",
     "react-bootstrap": "^0.30.7",
+    "react-bs-notifier": "^4.3.0",
     "react-cookie": "^1.0.4",
     "react-dom": "^15.4.2"
   },
