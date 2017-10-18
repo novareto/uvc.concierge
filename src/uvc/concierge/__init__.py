@@ -9,6 +9,7 @@ from repoze.who.api import get_api
 from .resources import js, css
 from .login import logout_app, login_center
 from .ticket import read_bauth
+from .injector import ConciergeKey
 
 
 FILTER_HEADERS = [
@@ -25,15 +26,9 @@ FILTER_HEADERS = [
 
 def wrap_start_response(start_response):
     def wrapped_start_response(status, headers_out):
-        keep = []
         # Remove "hop-by-hop" headers        
-        for header, value in headers_out:
-            if header not in FILTER_HEADERS:
-                keep.append((header, value))
-            if header == 'Content-Type' and 'text/html' in value:
-                if status.upper() == "200 OK":
-                    js.need()
-                    css.need()
+        keep = [(header, value) for (header, value) in headers_out
+                if header not in FILTER_HEADERS]
         return start_response(status, keep)
     return wrapped_start_response
 
@@ -80,47 +75,18 @@ def hub_factory(loader, global_conf, **local_conf):
     return urlmap
 
 
-class HubDetails(object):
-
-    def __init__(self, hub):
-        self.hub = hub
-
-    def __call__(self, environ, start_response):        
-        result = dict(self.hub.about(environ))
-        response_body = json.dumps(result)
-        status = '200 OK'
-        response_headers = [('Content-Type', 'application/json'),
-                            ('Content-Length', str(len(response_body)))]
-        start_response(status, response_headers)
-        return [response_body]
-
-
 class RemoteHub(URLMap):
-
-    def about(self, environ):        
-        identity = environ.get('repoze.who.identity')
-        if identity is not None:
-            tokens = set(identity.get('tokens', []))
-            for (domain, app_url), app in self.applications:
-                if app_url in tokens:
-                    link_url = app.link_url
-                    if link_url is None:
-                        link_url = 'http://%s%s' % (
-                            environ['HTTP_HOST'], app_url)
-                    yield (link_url, app.title)
-            link_url = 'http://%s/logout' % environ['HTTP_HOST']
-            yield (link_url, u"Logout")
-        else:
-            link_url = 'http://%s/login' % environ['HTTP_HOST']
-            yield (link_url, u"Login")
 
     def __init__(self, *args, **kwargs):
         URLMap.__init__(self, *args, **kwargs)
-        self['/__about__'] = HubDetails(self)
         self['/login'] = login_center(self)
         self['/logout'] = logout_app
 
+    def __call__(self, environ, start_response):
+        environ['HUB'] = self
+        return URLMap.__call__(self, environ, start_response)
 
+        
 def make_proxy(*global_conf, **local_conf):
     href = local_conf.get('href')
     secret_file = local_conf.get('secret_file')
@@ -129,14 +95,14 @@ def make_proxy(*global_conf, **local_conf):
     json_keys = lister(local_conf.get('json_keys'))
     pickle_keys = lister(local_conf.get('pickle_keys'))
 
-    application = WSGIProxyApp(
+    application = ConciergeKey(WSGIProxyApp(
         href,
         secret_file=secret_file,
         string_keys=string_keys,
         unicode_keys=unicode_keys,
         json_keys=json_keys,
         pickle_keys=pickle_keys,
-    )
+    ))
     application.href = href
     application.host = local_conf.get('host', 'href')
     application.target = local_conf.get('target', '/')

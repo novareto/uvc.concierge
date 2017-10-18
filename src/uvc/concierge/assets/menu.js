@@ -1,5 +1,7 @@
 $(document).ready(function() {
-    $.getJSON("http://localhost:8080/__about__", function(data) {
+    //var about_url = window.location.hostname + '/__about__';
+    //console.log(about_url);
+    $.getJSON('http://test.siguv.de/__about__', function(data) {
 	var items = [];
 	$.each(data, function(key, val) {
 	    items.push( "<li><a href='" + key + "'> 🔓 " + val + "</a></li>");

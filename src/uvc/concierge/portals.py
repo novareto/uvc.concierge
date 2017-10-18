@@ -63,6 +63,7 @@ class XMLRPCPortal(object):
 
     @timeout(False)
     def check_authentication(self, user, password):
+        print self.server
         print self.server.checkAuth(user, password)
         return self.server.checkAuth(user, password) is 1
 

@@ -34,7 +34,7 @@ def initiate_session(environ, username, domains):
     print "I SET THE SESSION"
     session = environ['beaker.session']
     if not 'address' in session:
-        session['address'] = dict(name1="Novareto", name2="GMBH", strasse="Karonlinenstr. 17", plz="90619", ort=u"Fürth")
+        session['address'] = dict(name1="Novareto", name2="GMBH", strasse="Karolinenstr. 17", plz="90619", ort=u"Fürth")
         session.save()
         session.persist()
 
@@ -58,7 +58,8 @@ class PortalsLoginPlugin(object):
         for name, task in queriers.items():
             try:
                 success = task.get(timeout=3)
-                if success is True:
+                print "success", success
+                if success == 1:
                     print "Successfuly authenticated on %r" % name
                     successes.add(name)
                 else:
@@ -101,5 +102,6 @@ def login_center(hub):
     def login_view(environ, start_response):
         request = Request(environ)
         response = LoginForm(hub, environ, request)()
+        response.headers['Cache-Control'] = "no-cache"
         return response(environ, start_response)
     return login_view
