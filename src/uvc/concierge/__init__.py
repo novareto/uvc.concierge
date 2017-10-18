@@ -3,13 +3,18 @@
 import json
 import base64
 import gevent
-from wsgiproxy.app import WSGIProxyApp
+#from wsgiproxy.app import WSGIProxyApp
 from paste.urlmap import URLMap, parse_path_expression
 from repoze.who.api import get_api
 from .resources import js, css
 from .login import logout_app, login_center
 from .ticket import read_bauth
+<<<<<<< HEAD
 from .injector import ConciergeKey
+=======
+from .websockets.websocket import WebSocketWSGI
+from .websockets.app import handle
+>>>>>>> 28fc84ad4b51a69ab88aa76d5f6c2987a1a4c7b9
 
 
 FILTER_HEADERS = [
@@ -48,7 +53,7 @@ def wrapper(app):
             aes = environ['aes_cipher']
             val = environ['repoze.who.identity']['repoze.who.userid']
             userpwd = read_bauth(aes, val)
-            httpauth = 'Basic ' + base64.encodestring(userpwd).strip()
+            httpauth = b'Basic ' + base64.encodestring(userpwd).strip()
             environ['HTTP_AUTHORIZATION'] = httpauth
             
         if app.use_x_headers is True:
@@ -75,12 +80,50 @@ def hub_factory(loader, global_conf, **local_conf):
     return urlmap
 
 
+<<<<<<< HEAD
 class RemoteHub(URLMap):
 
+=======
+class HubDetails(object):
+
+    def __init__(self, hub):
+        self.hub = hub
+
+    def __call__(self, environ, start_response):        
+        result = dict(self.hub.about(environ))
+        response_body = json.dumps(result)
+        status = '200 OK'
+        response_headers = [('Content-Type', 'application/json'),
+                            ('Content-Length', str(len(response_body)))]
+        start_response(status, response_headers)
+        return [bytes(response_body, 'utf8')]
+
+
+class RemoteHub(URLMap):
+
+    def about(self, environ):        
+        identity = environ.get('repoze.who.identity')
+        if identity is not None:
+            tokens = set(identity.get('tokens', []))
+            for (domain, app_url), app in self.applications:
+                if app_url in tokens:
+                    link_url = app.link_url
+                    if link_url is None:
+                        link_url = 'http://%s%s' % (
+                            environ['HTTP_HOST'], app_url)
+                    yield (link_url, app.title)
+            link_url = u'http://%s/logout' % environ['HTTP_HOST']
+            yield (link_url, u"Logout")
+        else:
+            link_url = u'http://%s/login' % environ['HTTP_HOST']
+            yield (link_url, u"Login")
+
+>>>>>>> 28fc84ad4b51a69ab88aa76d5f6c2987a1a4c7b9
     def __init__(self, *args, **kwargs):
         URLMap.__init__(self, *args, **kwargs)
         self['/login'] = login_center(self)
         self['/logout'] = logout_app
+        self['/socket'] = WebSocketWSGI(self, handle)
 
     def __call__(self, environ, start_response):
         environ['HUB'] = self
@@ -94,6 +137,7 @@ def make_proxy(*global_conf, **local_conf):
     unicode_keys = lister(local_conf.get('unicode_keys'))
     json_keys = lister(local_conf.get('json_keys'))
     pickle_keys = lister(local_conf.get('pickle_keys'))
+<<<<<<< HEAD
 
     application = ConciergeKey(WSGIProxyApp(
         href,
@@ -103,6 +147,19 @@ def make_proxy(*global_conf, **local_conf):
         json_keys=json_keys,
         pickle_keys=pickle_keys,
     ))
+=======
+#    import pdb; pdb.set_trace()
+#    application = WSGIProxyApp(
+#        href,
+#        secret_file=secret_file,
+#        string_keys=string_keys,
+#        unicode_keys=unicode_keys,
+#        json_keys=json_keys,
+#        pickle_keys=pickle_keys,
+#    )
+    from wsgiproxy import HostProxy
+    application = HostProxy(href, client='urllib3')
+>>>>>>> 28fc84ad4b51a69ab88aa76d5f6c2987a1a4c7b9
     application.href = href
     application.host = local_conf.get('host', 'href')
     application.target = local_conf.get('target', '/')
@@ -116,4 +173,19 @@ def make_proxy(*global_conf, **local_conf):
     app.login_url = local_conf.get('login_url') or href
     app.title = local_conf.get('title') or 'No title'
     app.link_url = local_conf.get('link_url', None)
+    return app
+
+
+def make_listener(*global_conf, **local_conf):
+
+    import os
+    def app(environ, start_response):
+        data = open(os.path.join(
+                     os.path.dirname(__file__),
+                     'websocket.html')).read()
+        data = data % environ
+        start_response('200 OK', [('Content-Type', 'text/html'),
+                                  ('Content-Length',  str(len(data)))])
+        return [data.encode('utf-8')]
+
     return app

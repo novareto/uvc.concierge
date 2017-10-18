@@ -20,6 +20,7 @@ install_requires = [
     'fanstatic',
     'gevent',
     'js.jquery',
+    'numpy',
     'wsgiproxy',
     'zope.interface',
     'repoze.who',
@@ -59,6 +60,8 @@ setup(name='uvc.concierge',
           ],
           'paste.app_factory': [
               'proxy = uvc.concierge:make_proxy',
+              'socket = uvc.concierge:make_socket',
+              'listener = uvc.concierge:make_listener',
           ],
           'paste.filter_app_factory': [
               'cipher = uvc.concierge.ticket:cipher',
