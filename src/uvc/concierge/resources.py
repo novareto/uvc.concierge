@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from fanstatic import Library, Resource
-from js.jquery import jquery
+#from js.jquery import jquery
 
-library = Library('remote_wsgi', 'assets')
-js = Resource(library, 'main.js', depends=[jquery])
-css = Resource(library, 'menu.css')
+library = Library('remote_wsgi', 'concierge_client')
+js = Resource(library, 'dist/build.js', bottom=True)

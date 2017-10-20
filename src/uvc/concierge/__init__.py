@@ -6,7 +6,7 @@ import gevent
 
 from paste.urlmap import URLMap, parse_path_expression
 from repoze.who.api import get_api
-from .resources import js, css
+from .resources import js
 from .login import logout_app, login_center
 from .ticket import read_bauth
 from .injector import ConciergeKey
@@ -26,11 +26,27 @@ FILTER_HEADERS = [
     ]
 
 
+#def wrap_start_response(start_response):
+#    def wrapped_start_response(status, headers_out):
+#        # Remove "hop-by-hop" headers        
+#        keep = [(header, value) for (header, value) in headers_out
+#                if header not in FILTER_HEADERS]
+#        if header == 'Content-Type' and 'text/html' in value:
+#        return start_response(status, keep)
+#    return wrapped_start_response
+
+
 def wrap_start_response(start_response):
     def wrapped_start_response(status, headers_out):
-        # Remove "hop-by-hop" headers        
-        keep = [(header, value) for (header, value) in headers_out
-                if header not in FILTER_HEADERS]
+        keep = []
+        # Remove "hop-by-hop" headers
+        for header, value in headers_out:
+            if header not in FILTER_HEADERS:
+                keep.append((header, value))
+            if header == 'Content-Type' and 'text/html' in value:
+                if status == "200 OK":
+                    "NEEED ME"
+                    js.need()
         return start_response(status, keep)
     return wrapped_start_response
 

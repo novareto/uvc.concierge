@@ -74,6 +74,7 @@ class ConciergeKey(object):
         #    ("<li><a href='%s'> 🔓 %s </a></li>" % (url, title)
         #     for url, title in self.about(environ))))
         # return html
+        VUE = '<div id="app"></div>'
         return VUE
 
     def __init__(self, app, **config):
@@ -98,12 +99,12 @@ class ConciergeKey(object):
         menu = self.render(environ)        
         html = response.body.replace(
             as_bytestring('</body>'),
-            as_bytestring('%s</body>' % menu), 1)
+            as_bytestring('%s </body>' % menu), 1)
 
         # CSS injection
-        html = html.replace(
-            as_bytestring('</head>'),
-            as_bytestring('%s</head>' % CSS), 1)
+        #html = html.replace(
+        #    as_bytestring('</head>'),
+        #    as_bytestring('%s</head>' % CSS), 1)
 
         # Replacing the body
         response.body = b''
