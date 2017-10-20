@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 import webob
 
@@ -44,10 +45,14 @@ CSS = """
 </style>
 """
 
+with open(os.path.join(os.path.dirname(__file__), 'nav.pt'), 'r') as tpl:
+    VUE = tpl.read()
+
 
 class ConciergeKey(object):
 
     def about(self, environ):
+        host = environ.get('HTTP_X_VHM_HOST') or environ.get('HTTP_HOST')
         identity = environ.get('repoze.who.identity')
         if identity is not None:
             tokens = set(identity.get('tokens', []))
@@ -55,21 +60,21 @@ class ConciergeKey(object):
                 if app_url in tokens:
                     link_url = app.link_url
                     if link_url is None:
-                        link_url = 'http://%s%s' % (
-                            environ['HTTP_HOST'], app_url)
+                        link_url = 'http://%s%s' % (host, app_url)
                     yield (link_url, app.title)
-            link_url = 'http://%s/logout' % environ['HTTP_HOST']
+            link_url = 'http://%s/logout' % host
             yield (link_url, "Logout")
         else:
-            link_url = 'http://%s/login' % environ['HTTP_HOST']
+            link_url = 'http://%s/login' % host
             yield (link_url, "Login")
 
     def render(self, environ):
-        html = "<ul id='remotewsgi' class='list'>%s</ul>"
-        html = html % ('\n'.join(
-            ("<li><a href='%s'> 🔓 %s </a></li>" % (url, title)
-             for url, title in self.about(environ))))
-        return html
+        #html = "<ul id='remotewsgi' class='list'>%s</ul>"
+        #html = html % ('\n'.join(
+        #    ("<li><a href='%s'> 🔓 %s </a></li>" % (url, title)
+        #     for url, title in self.about(environ))))
+        # return html
+        return VUE
 
     def __init__(self, app, **config):
         self.app = app

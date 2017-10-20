@@ -3,18 +3,15 @@
 import json
 import base64
 import gevent
-#from wsgiproxy.app import WSGIProxyApp
+
 from paste.urlmap import URLMap, parse_path_expression
 from repoze.who.api import get_api
 from .resources import js, css
 from .login import logout_app, login_center
 from .ticket import read_bauth
-<<<<<<< HEAD
 from .injector import ConciergeKey
-=======
 from .websockets.websocket import WebSocketWSGI
 from .websockets.app import handle
->>>>>>> 28fc84ad4b51a69ab88aa76d5f6c2987a1a4c7b9
 
 
 FILTER_HEADERS = [
@@ -38,16 +35,10 @@ def wrap_start_response(start_response):
     return wrapped_start_response
 
 
-def lister(value):
-    if value is None:
-        return None
-    if isinstance(value, (list, set, tuple)):
-        return value
-    return [v.strip() for v in value.split(',')]
-
-
-def wrapper(app):
+def wrapper(hub, app):
     def caller(environ, start_response):
+
+        environ['HUB'] = hub
         
         if 'repoze.who.identity' in environ:
             aes = environ['aes_cipher']
@@ -57,39 +48,25 @@ def wrapper(app):
             environ['HTTP_AUTHORIZATION'] = httpauth
             
         if app.use_x_headers is True:
-            environ['HTTP_X_VHM_HOST'] = app.host
-            environ['HTTP_X_VHM_ROOT'] = app.target
-            
-        result = app(environ, wrap_start_response(start_response))
+            print("we use it ?")
+            environ['HTTP_X_VHM_HOST'] = "karl.novareto.de:8000" #app.host
+            environ['VHM_ROOT'] = "plone" #app.target
+
+        environ['RAW_URI'] = environ['RAW_URI'].replace('/plone', '')
+        print(environ['RAW_URI'])
+        environ['RAW_URI'] = environ['RAW_URI'].replace('/uvcsite', '')
+        result = ConciergeKey(app)(environ, wrap_start_response(start_response))
+
         return result
     return caller
 
 
-def hub_factory(loader, global_conf, **local_conf):
-    if 'not_found_app' in local_conf:
-        not_found_app = local_conf.pop('not_found_app')
-    else:
-        not_found_app = global_conf.get('not_found_app')
-    if not_found_app:
-        not_found_app = loader.get_app(not_found_app, global_conf=global_conf)
-    urlmap = RemoteHub(not_found_app=not_found_app)
-    for path, app_name in local_conf.items():
-        path = parse_path_expression(path)
-        app = loader.get_app(app_name, global_conf=global_conf)
-        urlmap[path] = app
-    return urlmap
-
-
-<<<<<<< HEAD
-class RemoteHub(URLMap):
-
-=======
 class HubDetails(object):
 
     def __init__(self, hub):
         self.hub = hub
 
-    def __call__(self, environ, start_response):        
+    def __call__(self, environ, start_response):
         result = dict(self.hub.about(environ))
         response_body = json.dumps(result)
         status = '200 OK'
@@ -97,83 +74,6 @@ class HubDetails(object):
                             ('Content-Length', str(len(response_body)))]
         start_response(status, response_headers)
         return [bytes(response_body, 'utf8')]
-
-
-class RemoteHub(URLMap):
-
-    def about(self, environ):        
-        identity = environ.get('repoze.who.identity')
-        if identity is not None:
-            tokens = set(identity.get('tokens', []))
-            for (domain, app_url), app in self.applications:
-                if app_url in tokens:
-                    link_url = app.link_url
-                    if link_url is None:
-                        link_url = 'http://%s%s' % (
-                            environ['HTTP_HOST'], app_url)
-                    yield (link_url, app.title)
-            link_url = u'http://%s/logout' % environ['HTTP_HOST']
-            yield (link_url, u"Logout")
-        else:
-            link_url = u'http://%s/login' % environ['HTTP_HOST']
-            yield (link_url, u"Login")
-
->>>>>>> 28fc84ad4b51a69ab88aa76d5f6c2987a1a4c7b9
-    def __init__(self, *args, **kwargs):
-        URLMap.__init__(self, *args, **kwargs)
-        self['/login'] = login_center(self)
-        self['/logout'] = logout_app
-        self['/socket'] = WebSocketWSGI(self, handle)
-
-    def __call__(self, environ, start_response):
-        environ['HUB'] = self
-        return URLMap.__call__(self, environ, start_response)
-
-        
-def make_proxy(*global_conf, **local_conf):
-    href = local_conf.get('href')
-    secret_file = local_conf.get('secret_file')
-    string_keys = lister(local_conf.get('string_keys'))
-    unicode_keys = lister(local_conf.get('unicode_keys'))
-    json_keys = lister(local_conf.get('json_keys'))
-    pickle_keys = lister(local_conf.get('pickle_keys'))
-<<<<<<< HEAD
-
-    application = ConciergeKey(WSGIProxyApp(
-        href,
-        secret_file=secret_file,
-        string_keys=string_keys,
-        unicode_keys=unicode_keys,
-        json_keys=json_keys,
-        pickle_keys=pickle_keys,
-    ))
-=======
-#    import pdb; pdb.set_trace()
-#    application = WSGIProxyApp(
-#        href,
-#        secret_file=secret_file,
-#        string_keys=string_keys,
-#        unicode_keys=unicode_keys,
-#        json_keys=json_keys,
-#        pickle_keys=pickle_keys,
-#    )
-    from wsgiproxy import HostProxy
-    application = HostProxy(href, client='urllib3')
->>>>>>> 28fc84ad4b51a69ab88aa76d5f6c2987a1a4c7b9
-    application.href = href
-    application.host = local_conf.get('host', 'href')
-    application.target = local_conf.get('target', '/')
-    application.use_x_headers = local_conf.get(
-        'use_x_headers', 'False').lower() == 'true'
-
-    app = wrapper(application)
-
-    # login info & metadata
-    app.login_method = local_conf.get('login_method')
-    app.login_url = local_conf.get('login_url') or href
-    app.title = local_conf.get('title') or 'No title'
-    app.link_url = local_conf.get('link_url', None)
-    return app
 
 
 def make_listener(*global_conf, **local_conf):

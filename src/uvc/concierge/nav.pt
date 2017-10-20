@@ -1,0 +1,113 @@
+<div id="remotewsgi">
+  <h2>Log In</h2>
+  <div class="alert alert-danger" v-if="error">
+    <p>{{ error }}</p>
+  </div>
+  <div class="form-group">
+    <input
+        type="text"
+        class="form-control"
+        placeholder="Enter your username"
+        v-model="credentials.username"
+	/>
+  </div>
+  <div class="form-group">
+    <input
+        type="password"
+        class="form-control"
+        placeholder="Enter your password"
+        v-model="credentials.password"
+	/>
+  </div>
+  <button class="btn btn-primary" @click="submit()">Access</button>
+</div>
+  
+<script data-main="app" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.3/require.min.js" ></script> 
+
+<script>
+    requirejs.config({
+        paths: {
+            "vue": "https://cdnjs.cloudflare.com/ajax/libs/vue/2.2.1/vue.min"
+        },
+    });
+
+    // to use component in your code with RequireJS: 
+    // put a reference to your component file with or without extencion after 'vue!' 
+    require(["vue"], function(Vue) {
+
+      const socket = new WebSocket("ws://karl.novareto.de:8000/socket")
+
+      const emitter = new Vue({
+        methods:{
+          send(message) {
+            if (1 === socket.readyState)
+              socket.send(message)
+            }
+         }
+       })
+
+       socket.onmessage = function(msg){
+         emitter.$emit("message", msg.data)
+       }
+
+       socket.onerror = function(err){
+         emitter.$emit("error", err)
+       }
+
+        var app = new Vue({
+          el:"#remotewsgi",
+	  created() {
+            emitter.$on("message", this.receive);
+            emitter.$on("error", this.fail);
+	  },
+          beforeDestroy() {
+            emitter.$off("message", this.receive)
+          },
+          data:{
+            credentials: {
+              username: '',
+              password: ''
+            },
+            error: ''
+          },
+          methods: {
+             receive(msg) {
+               var payload = JSON.parse(msg);
+               if (payload.length != 2) {
+                 alert('Malformed response');
+               }
+               if (payload[0] == 'login_success') {
+                 payload[1].data.forEach(function(entry) {
+                   if (entry[0] == 'Set-Cookie') {
+                     document.cookie = entry[1];
+                     alert("Logged in");
+                   }
+                 });
+               }
+               else if (payload[0] == 'login_error') {
+                 this.error = 'Login failed : ' + payload[1]['message'];
+               }
+               else if (payload[0] == 'login_failure') {
+                 this.error = 'Login failed';
+               }
+               else {
+                 console.log(msg);
+               }
+	     },
+             fail(msg) {
+               this.error = msg;
+             },
+             submit() {
+               var credentials = {
+                 login: this.credentials.username,
+                 password: this.credentials.password
+               }
+               var command = JSON.stringify(["login", credentials]);
+               alert(command);
+               emitter.send(command);
+             }
+          }
+      });
+
+    });
+ </script>

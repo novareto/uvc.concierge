@@ -97,10 +97,7 @@ def handle(ws):
 
         try:
             message = json.loads(str(m, 'utf-8'))
-            print (message)
             command, data = message
-            print (command)
-            print (data)
         except ValueError:
             result = MALFORMED
         else:
@@ -110,5 +107,6 @@ def handle(ws):
             else:
                 result = UNKNOWN_COMMAND
 
+        print(result)
         encoded = json.dumps(result)
         ws.send(encoded)

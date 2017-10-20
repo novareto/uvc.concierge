@@ -65,6 +65,7 @@ setup(name='uvc.concierge',
           ],
           'paste.filter_app_factory': [
               'cipher = uvc.concierge.ticket:cipher',
+              'cors = uvc.concierge.cors:cors_middleware',
           ],
       },
       )
