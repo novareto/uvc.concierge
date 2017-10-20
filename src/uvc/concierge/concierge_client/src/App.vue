@@ -42,7 +42,7 @@
               <div class="control">
                 <input v-model="logindata.password" class="input" type="password" placeholder="Passwort">
               </div>
-              <button v-on:click.prevent="handleLogin" class="button is-primary"> Login </button>
+              <button v-on:click.prevent="submit" class="button is-primary"> Login </button>
             </div>
           </a>
         </div>
@@ -54,12 +54,20 @@
 
 <script>
 
+import Socket from "./socket"
+
 export default {
   name: 'app',
+  created() {
+    Socket.$on("message", this.receive);
+    Socket.$on("error", this.fail);
+  },
+  beforeDestroy() {
+    Socket.$off("message", this.receive)
+  },
   data() {
     return {
       loggedIn: false,
-      isConnected: false,
       socketMessage: '',
       logindata: {
         login: '',
@@ -68,16 +76,41 @@ export default {
     }
   },
   methods: {
-    handleLogin() {
-      console.log('DRINNN')
-      if (this.logindata.login == '0101010001'){
-        this.loggedIn = true
+    receive(msg) {
+      var payload = JSON.parse(msg);
+      if (payload.length != 2) {
+	alert('Malformed response');
+      }
+      if (payload[0] == 'login_success') {
+	payload[1].data.forEach(function(entry) {
+	    if (entry[0] == 'Set-Cookie') {
+	      document.cookie = entry[1];
+	      alert("Logged in");
+	      this.loggedIn = true;
+	    }
+	  });
+      }
+      else if (payload[0] == 'login_error') {
+	this.error = 'Login failed : ' + payload[1]['message'];
+      }
+      else if (payload[0] == 'login_failure') {
+	this.error = 'Login failed';
+      }
+      else {
+	console.log(msg);
       }
     },
-    logout() {
-       this.loggedIn = false
-       this.logindata.login = ""
-       this.logindata.password = ""
+    fail(msg) {
+      this.error = msg;
+    },
+    submit() {
+      var credentials = {
+        login: this.logindata.login,
+        password: this.logindata.password
+      }
+      var command = JSON.stringify(["login", credentials]);
+      alert(command);
+      Socket.send(command);
     }
   },
 }

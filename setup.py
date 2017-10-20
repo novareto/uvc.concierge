@@ -19,13 +19,12 @@ install_requires = [
     'barrel',
     'fanstatic',
     'gevent',
-    'js.jquery',
     'numpy',
     'wsgiproxy',
     'zope.interface',
     'repoze.who',
     'requests',
-    'dolmen.template[cromlech]',
+    'dolmen.template',
     ]
 
 tests_require = [
