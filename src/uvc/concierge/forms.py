@@ -20,8 +20,7 @@ FAILURE = object()
 
 class LogMe(object):
 
-    def __init__(self, context, environ, request):
-        self.context = context
+    def __init__(self, environ, request):
         self.environ = environ
         self.request = request
 
@@ -38,7 +37,6 @@ class LogMe(object):
             return FAILURE, [], data
 
         who_api = get_api(self.environ)
-        self.environ['remote.hub'] = self.context
         authenticated, headers = who_api.login(data)
         
         if authenticated:
@@ -60,8 +58,7 @@ class LoginForm(object):
         'action.login': LogMe,
     }
 
-    def __init__(self, context, environ, request):
-        self.context = context
+    def __init__(self, environ, request):
         self.environ = environ
         self.request = request
 
@@ -95,8 +92,7 @@ class LoginForm(object):
         
         for action, trigger in self.actions.items():
             if action in self.request.POST:
-                success, headers, data = trigger(
-                    self.context, self.environ, self.request)()
+                success, headers, data = trigger(self.environ, self.request)()
                 if success == SUCCESS:
                     return HTTPFound(location='/', headers=headers)
                 if success == FAILURE:

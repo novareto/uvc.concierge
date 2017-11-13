@@ -78,6 +78,7 @@ export default {
   methods: {
     receive(msg) {
       var payload = JSON.parse(msg);
+      console.log('THIS IS MY PAYLOAD', payload)
       if (payload.length != 2) {
 	alert('Malformed response');
       }
@@ -109,8 +110,8 @@ export default {
         password: this.logindata.password
       }
       var command = JSON.stringify(["login", credentials]);
-      alert(command);
       Socket.send(command);
+      alert(command);
     }
   },
 }

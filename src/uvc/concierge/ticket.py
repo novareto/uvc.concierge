@@ -229,6 +229,7 @@ class AuthTktCookiePlugin(Basetkt):
     def remember(self, environ, identity):
         cookies = get_cookies(environ)
         if identity is not None and not self.cookie_name in cookies:
+            import pdb; pdb.set_trace() 
             aes = environ['aes_cipher']
             val = base64.b64encode(bauth(aes, '%s:%s' % (
                 identity['login'], identity['password'])))

@@ -1,3 +1,4 @@
+import Vue from 'vue'
 const socket = new WebSocket("ws://karl.novareto.de:8000/socket")
 
 const emitter = new Vue({

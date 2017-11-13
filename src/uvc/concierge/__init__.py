@@ -4,6 +4,8 @@ import json
 import base64
 import gevent
 
+PORTALS_REGISTRY = {}
+
 from paste.urlmap import URLMap, parse_path_expression
 from repoze.who.api import get_api
 from .resources import js

@@ -40,6 +40,7 @@ def Login(ws, formdata):
         if ('login' in formdata) ^ ('password' in formdata):
             return ["login_error", {'message': 'missing data'}]
         who_api = get_api(ws.environ)    
+        import pdb; pdb.set_trace() 
         identity, headers = who_api.login(formdata)
 
         if identity is not None:
